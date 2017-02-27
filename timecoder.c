@@ -458,7 +458,7 @@ static void process_bitstream(struct timecoder *tc, signed int m)
     else if(tc->invalid_counter > 5) {
 
 		timecoder_cycle_definition(tc);
-		fprintf(stderr, "Trying other timecode def: %s\n", tc->def->name);
+		// fprintf(stderr, "Trying other timecode def: %s\n", tc->def->name);
 	
 			otherTestTimecode = fwd(tc->timecode, tc->def);
 			  otherTestBits = (tc->bitstream >> 1)
