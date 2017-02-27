@@ -599,6 +599,13 @@ int main(int argc, char *argv[])
 
     rc = EXIT_FAILURE; /* until clean exit */
 
+	if (osc_start((struct deck *)&deck, &library, ndeck) == -1) {
+            fprintf(stderr, "Error starting osc server");
+            return -1;
+        } else {
+            fprintf(stderr, "Successfully started osc server\n");
+        }
+	
     /* Order is important: launch realtime thread first, then mlock.
      * Don't mlock the interface, use sparingly for audio threads */
 
@@ -610,9 +617,13 @@ int main(int argc, char *argv[])
         goto out_rt;
     }
 
-    if (interface_start(&library, geo, decor) == -1)
-        goto out_rt;
-
+    //if (interface_start(&library, geo, decor) == -1)
+      //  goto out_rt;
+        for (n = 0; n < ndeck; n++) {
+            if (timecoder_monitor_init(&deck[n].timecoder, 50) == -1)
+                return -1;
+        }
+  
     if (rig_main() == -1)
         goto out_interface;
 

@@ -70,6 +70,7 @@ struct timecoder {
     bits_t bitstream, /* actual bits from the record */
         timecode; /* corrected timecode */
     unsigned int valid_counter, /* number of successful error checks */
+		invalid_counter, /*number of unsuccessful error checks*/
         timecode_ticker; /* samples since valid timecode was read */
 
     /* Feedback */

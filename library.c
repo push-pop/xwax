@@ -361,6 +361,31 @@ static void record_clear(struct record *re)
     free(re->pathname);
 }
 
+
+/*
+ * Add an alloc'd record to the library
+ *
+ * Return: entry stored in the library, NULL if out of memory
+ * Post: caller not resposible for d (unless NULL is returned)
+ */
+
+struct record* library_add(struct library *l, struct record *d)
+{
+    struct record *x;
+
+    x = listing_add(l->all.listing, d);
+    if (x == NULL)
+        return NULL;
+
+    if (x != d) { /* existing entry */
+        record_clear(d);
+        free(d);
+    }
+
+    return x;
+}
+
+
 /*
  * Free resources associated with the music library
  */

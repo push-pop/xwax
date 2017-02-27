@@ -396,6 +396,7 @@ void retarget(struct player *pl)
         /* Jump the track to the time */
 
         pl->position = pl->target_position;
+		pl->offset = 0.0;
         fprintf(stderr, "Seek to new position %.2lfs.\n", pl->position);
 
     } else if (fabs(pl->pitch) > SYNC_PITCH) {
@@ -431,6 +432,14 @@ void player_collect(struct player *pl, signed short *pcm, unsigned samples)
 {
     double r, pitch, dt, target_volume;
 
+
+
+	if(pl->track != NULL && pl->track->bytes > 0 && player_get_remain(pl) < 0.0){
+		player_recue(pl);
+	fprintf(stderr, "Recue at position: %.2lfs.\n", pl->position);
+
+	}
+	
     dt = pl->sample_dt * samples;
 
     if (pl->timecode_control) {

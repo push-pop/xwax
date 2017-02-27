@@ -59,7 +59,7 @@ struct library {
 void listing_init(struct listing *l);
 void listing_clear(struct listing *l);
 struct record* listing_add(struct listing *l, struct record *r);
-
+struct record* library_add(struct library *l, struct record *d);
 int library_init(struct library *li);
 void library_clear(struct library *li);
 

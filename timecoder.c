@@ -306,6 +306,7 @@ void timecoder_init(struct timecoder *tc, struct timecode_def *def,
     tc->bitstream = 0;
     tc->timecode = 0;
     tc->valid_counter = 0;
+	tc->invalid_counter = 0;
     tc->timecode_ticker = 0;
 
     tc->mon = NULL;
@@ -430,26 +431,61 @@ static void process_bitstream(struct timecoder *tc, signed int m)
 
     /* tc->bitstream is always in the order it is physically placed on
      * the vinyl, regardless of the direction. */
-
+	 
+	 bits_t testBits, otherTestBits,
+	 testTimecode, otherTestTimecode;
+	 
     if (tc->forwards) {
-	tc->timecode = fwd(tc->timecode, tc->def);
-	tc->bitstream = (tc->bitstream >> 1)
+	testTimecode = fwd(tc->timecode, tc->def);
+	testBits = (tc->bitstream >> 1)
 	    + (b << (tc->def->bits - 1));
 
     } else {
 	bits_t mask;
 
 	mask = ((1 << tc->def->bits) - 1);
-	tc->timecode = rev(tc->timecode, tc->def);
-	tc->bitstream = ((tc->bitstream << 1) & mask) + b;
+	testTimecode = rev(tc->timecode, tc->def);
+	testBits = ((tc->bitstream << 1) & mask) + b;
     }
 
-    if (tc->timecode == tc->bitstream)
-	tc->valid_counter++;
-    else {
-	tc->timecode = tc->bitstream;
-	tc->valid_counter = 0;
+    if (testTimecode == testBits){
+		tc->valid_counter++;
+		tc->bitstream = testBits;
+		tc->timecode= testTimecode;
+		tc->invalid_counter=0;
+	}
+	/* if we've had enough misses, try another timecode*/
+    else if(tc->invalid_counter > 5) {
+
+		timecoder_cycle_definition(tc);
+		fprintf(stderr, "Trying other timecode def: %s\n", tc->def->name);
+	
+			otherTestTimecode = fwd(tc->timecode, tc->def);
+			  otherTestBits = (tc->bitstream >> 1)
+			   + (b << (tc->def->bits - 1));
+
+		
+		if (otherTestTimecode == otherTestBits) {
+			fprintf(stderr, "Switched to timecoder def: %s\n", tc->def->name);
+			tc->valid_counter++;
+			tc->timecode = otherTestTimecode;
+			tc->bitstream = otherTestBits;
+			tc->invalid_counter=0;
+		} else {
+			//go back to the one we were using
+			timecoder_cycle_definition(tc);
+			tc->bitstream = testBits;
+			tc->timecode = tc->bitstream;
+			tc->valid_counter = 0;
+			tc->invalid_counter++;
+		}
     }
+	else/* Do nothing, keep going */{
+		tc->bitstream = testBits;
+		tc->timecode = tc->bitstream;
+		tc->valid_counter = 0;
+		tc->invalid_counter++;
+	}
 
     /* Take note of the last time we read a valid timecode */
 
@@ -498,6 +534,7 @@ static void process_sample(struct timecoder *tc,
         if (forwards != tc->forwards) { /* direction has changed */
             tc->forwards = forwards;
             tc->valid_counter = 0;
+			tc->invalid_counter=0;
         }
     }
 
